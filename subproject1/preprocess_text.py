@@ -4,7 +4,7 @@ sys.path.append('utils')
 import asserts, utils
 
 # Read command line arguments
-# python subproject1/preprocess_text.py --path "./data" -o "./output/block1.json"
+# python subproject1/preprocess_text.py --path "./data"
 args = asserts.init_params()
 
 if not os.path.isdir("output"):
@@ -17,7 +17,7 @@ try:
 except:
     nltk.download('punkt')
 
-def build_postings_list(block):
+def build_postings_list(block, index):
     dictionary = dict()
     for pairs in block:
         docID = int(pairs[0])
@@ -33,9 +33,8 @@ def build_postings_list(block):
         dictionary[term][1] = sorted(list(dictionary[term][1]))
 
     raw = json.dumps(dictionary)
-    with open('output/postings_list.json', 'a') as fp:
+    with open(f'output/block{index}.json', 'w') as fp:
         fp.write(str(raw))
-        fp.write("\n")
 
 def preprocess_reuters(path):
     print("\nGeting raw files...")
@@ -46,10 +45,9 @@ def preprocess_reuters(path):
     doc_pairs = utils.block_extractor(documents)
 
     print("\nCreating blocks...")
+    index = 1
     for block in tqdm(utils.block_tokenizer(doc_pairs)):
-        build_postings_list(block)
-        
-    return F
+        build_postings_list(block, index)
+        index +=1
 
-for reuters_file_content in tqdm(preprocess_reuters(args.path)):
-    asserts.output(reuters_file_content)
+preprocess_reuters(args.path)
