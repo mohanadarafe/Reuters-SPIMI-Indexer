@@ -41,7 +41,6 @@ def getDocumentId(document):
     return document[start:end]
 
 def block_tokenizer(document_dict):
-    block = []
     tupleList = []
     wordTuple = ()
 
@@ -52,12 +51,8 @@ def block_tokenizer(document_dict):
             if words != "":
                 wordTuple = (id, words)
                 tupleList.append(wordTuple)
-
-            if (len(tupleList) == 500):
-                block.append(tupleList)
-                tupleList = []
             
-    return block
+    return tupleList
 
 def block_extractor(documents):
     newsList = []

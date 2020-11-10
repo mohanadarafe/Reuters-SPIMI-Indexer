@@ -1,40 +1,25 @@
 import nltk, time, sys, os, json
+from collections import OrderedDict 
 from tqdm import tqdm
 sys.path.append('utils')
 import asserts, utils
 
-# Read command line arguments
-# python subproject1/preprocess_text.py --path "./data"
 args = asserts.init_params()
 
-if not os.path.isdir("output"):
-    os.makedirs("output")
-else:
-    os.replace("output", "output")
+def sort_postings_list(dictionary):
+    return OrderedDict(sorted(dictionary.items()))
 
-try:
-    nltk.data.find('tokenizer/punkt')
-except:
-    nltk.download('punkt')
+def build_postings_list(block, dictionary):
+    docID = int(block[0])
+    term = block[1]
 
-def build_postings_list(block, index):
-    dictionary = dict()
-    for pairs in block:
-        docID = int(pairs[0])
-        term = pairs[1]
-
-        if term not in dictionary:
-            dictionary[term] = [1, set([docID])]
-        elif term in dictionary:
-            dictionary[term][1].add(docID)
-            dictionary[term][0] = len(dictionary[term][1])
-
-    for term in dictionary:
-        dictionary[term][1] = sorted(list(dictionary[term][1]))
-
-    raw = json.dumps(dictionary)
-    with open(f'output/block{index}.json', 'w') as fp:
-        fp.write(str(raw))
+    if term not in dictionary:
+        dictionary[term] = [1, list(set([docID]))]
+    elif (term in dictionary) and (docID not in dictionary[term][1]):
+        dictionary[term][1].append(docID)
+        dictionary[term][0] = len(dictionary[term][1])
+        
+    return dictionary
 
 def preprocess_reuters(path):
     print("\nGeting raw files...")
@@ -45,9 +30,22 @@ def preprocess_reuters(path):
     doc_pairs = utils.block_extractor(documents)
 
     print("\nCreating blocks...")
-    index = 1
+    blockNumber = 1
+    dictionary = dict()
     for block in tqdm(utils.block_tokenizer(doc_pairs)):
-        build_postings_list(block, index)
-        index +=1
+        build_postings_list(block, dictionary)
+
+        if len(dictionary) == 500:
+            dictionary = sort_postings_list(dictionary)
+            raw = json.dumps(dictionary)
+            with open(f'output/block{blockNumber}.json', 'w') as fp:
+                fp.write(str(raw))
+            dictionary = dict()
+            blockNumber += 1
+
+    # Dump the rest
+    raw = json.dumps(dictionary)
+    with open(f'output/block{blockNumber}.json', 'w') as fp:
+        fp.write(str(raw))
 
 preprocess_reuters(args.path)
