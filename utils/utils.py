@@ -4,36 +4,43 @@ from tqdm import tqdm
 
 def get_tokens(document):
     tokensList = []
-    for tokens in getDocumentTitle(document).split(" "):
+    for tokens in getDocumentTitle(document):
         tokensList.append(tokens)
 
-    for tokens in getDocumentBody(document).split(" "):
+    for tokens in getDocumentBody(document):
         tokensList.append(tokens)
 
-    for tokens in getDocumentExtraTokens(document).split(" "):
+    for tokens in getDocumentExtraTokens(document):
         tokensList.append(tokens)
 
     return tokensList
 
 def sanitizer(document, starterDelimiter, endDelimiter, index):
-    if document.find(starterDelimiter) == -1:
-        return ""
-
+    tokenizer = nltk.RegexpTokenizer(r'\w+')
     start = document.find(starterDelimiter) + index
     end = document.find(endDelimiter)
-    return document[start:end]
+    return start, end, tokenizer
 
 def getDocumentBody(document):
-    return sanitizer(document, "<BODY>", "&#3;</BODY></TEXT></REUTERS", 6)
+    start, end, tokenizer = sanitizer(document, "<BODY>", "Reuter &#3;</BODY></TEXT></REUTERS", 6)
+    tokens = tokenizer.tokenize(document[start:end])
+    return tokens
 
 def getDocumentTitle(document):
-    return sanitizer(document, "<TITLE>", "</TITLE>", 7)
+    start, end, tokenizer = sanitizer(document, "<TITLE>", "</TITLE>", 7)
+    tokens = tokenizer.tokenize(document[start:end])
+    return tokens
 
 def getDocumentDate(document):
-    return sanitizer(document, "<DATELINE>", "</DATELINE>", 10)
+    start, end, tokenizer = sanitizer(document, "<DATELINE>", "</DATELINE>", 10)
+    tokens = tokenizer.tokenize(document[start:end])
+    return tokens
 
+## This gets all tokens in <D> tags which includes people, categories & places.
 def getDocumentExtraTokens(document):
-    return sanitizer(document, "<D>", "</D>", 3)
+    start, end, tokenizer = sanitizer(document, "<D>", "</D>", 3)
+    tokens = tokenizer.tokenize(document[start:end])
+    return tokens
 
 def getDocumentId(document):
     start = document.find('NEWID="') + 7

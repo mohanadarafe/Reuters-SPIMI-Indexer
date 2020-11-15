@@ -11,4 +11,4 @@ try:
 except:
     nltk.download('punkt')
 
-Popen('python subproject1/preprocess_text.py --path "./data"', shell=True).wait()
+Popen('python subproject1/subproject1.py --path "./data"', shell=True).wait()
