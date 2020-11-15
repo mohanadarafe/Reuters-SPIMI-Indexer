@@ -1,4 +1,4 @@
-import nltk, glob
+import nltk, glob, math
 from nltk import word_tokenize
 from tqdm import tqdm
 
@@ -47,7 +47,34 @@ def getDocumentId(document):
     end = document.find(">", start) - 1
     return document[start:end]
 
-def block_tokenizer(document_dict):
+def compute_rsv(df, tf, Ld, Lave, b=0, k=1) -> float:
+    N = 21578
+    product1 = math.log(N/df)
+    product2 = (((k + 1) * tf) / (k * ((1-b) + (b * (Ld/Lave)) + tf)))
+    return product1 * product2
+
+def doc_length_average(document_dict):
+    sum = 0
+    for dictionary in tqdm(document_dict):
+        tokens = get_tokens(dictionary["TEXT"])
+        sum += len(tokens)
+    return sum / 21578
+
+def get_document_tf_id(dictionary, document):
+    for tokens in get_tokens(document):
+        if tokens not in dictionary:
+            dictionary[tokens] = 1
+        else:
+            dictionary[tokens] += 1
+    return dictionary
+
+def build_tf_id(document_dict):
+    tf_id = dict()
+    text = document_dict["TEXT"]
+    tf_id = get_document_tf_id(tf_id, text)
+    return tf_id
+
+def block_tokenizer(document_dict, flag = False):
     tupleList = []
     wordTuple = ()
 

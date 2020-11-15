@@ -52,7 +52,7 @@ def merge_blocks():
         doc_freq = len(sorted_doc_freq)
         inverted_index[token] = (doc_freq, sorted_doc_freq)
 
-    raw = json.dumps(inverted_index)
+    raw = json.dumps(inverted_index, sort_keys=True, indent=4)
     with open('postings_list.json', 'w') as f:
         f.write(str(raw))
 
@@ -85,5 +85,6 @@ def separate_blocks(path):
     dictionary = sort_postings_list(dictionary)
     write_block_to_disk(dictionary, blockNumber)
     merge_blocks()
+    print(f"Done! File created at: {os.path.abspath('postings_list.json')}")
 
-merge_blocks()
+separate_blocks(args.path)
