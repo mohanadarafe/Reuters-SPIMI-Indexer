@@ -1,46 +1,57 @@
-import nltk, glob, math
+import nltk, glob, math, os, json, re
 from nltk import word_tokenize
 from tqdm import tqdm
 
+def open_dictionary_file(file):
+    assert os.path.isfile(file), "The file does not exist!"
+    dictionary = dict()
+    with open(file, 'r') as json_file: 
+        dictionary = json.load(json_file)
+
+    return dictionary
+
 def get_tokens(document):
     tokensList = []
-    for tokens in getDocumentTitle(document):
-        tokensList.append(tokens)
+    for tokens in getDocumentTitle(document).split(" "):
+        if tokens and "&" not in tokens:
+            tokensList.append(tokens.rstrip('.,"'))
 
-    for tokens in getDocumentBody(document):
-        tokensList.append(tokens)
+    for tokens in getDocumentBody(document).split(" "):
+        if tokens and "&" not in tokens:
+            tokensList.append(tokens.rstrip('.,"'))
 
-    for tokens in getDocumentExtraTokens(document):
-        tokensList.append(tokens)
+    for tokens in getDocumentExtraTokens(document).split(" "):
+        if tokens and "&" not in tokens:
+            tokensList.append(tokens.rstrip('.,"'))
 
     return tokensList
 
 def sanitizer(document, starterDelimiter, endDelimiter, index):
-    tokenizer = nltk.RegexpTokenizer(r'\w+')
+    query = r"(?=\S*[\'-])([a-zA-Z\'-]+)|(\w+)"
     start = document.find(starterDelimiter) + index
     end = document.find(endDelimiter)
-    return start, end, tokenizer
+    return start, end, query
 
 def getDocumentBody(document):
-    start, end, tokenizer = sanitizer(document, "<BODY>", "Reuter &#3;</BODY></TEXT></REUTERS", 6)
-    tokens = tokenizer.tokenize(document[start:end])
-    return tokens
+    start, end, query = sanitizer(document, "<BODY>", "Reuter &#3;</BODY></TEXT></REUTERS", 6)
+    final_data = ' '.join(i for i in document[start:end].split('\n') if re.findall(query, i))
+    return final_data
 
 def getDocumentTitle(document):
-    start, end, tokenizer = sanitizer(document, "<TITLE>", "</TITLE>", 7)
-    tokens = tokenizer.tokenize(document[start:end])
-    return tokens
+    start, end, query = sanitizer(document, "<TITLE>", "</TITLE>", 7)
+    final_data = ' '.join(i for i in document[start:end].split('\n') if re.findall(query, i))
+    return final_data
 
 def getDocumentDate(document):
-    start, end, tokenizer = sanitizer(document, "<DATELINE>", "</DATELINE>", 10)
-    tokens = tokenizer.tokenize(document[start:end])
-    return tokens
+    start, end, query = sanitizer(document, "<DATELINE>", "</DATELINE>", 10)
+    final_data = ' '.join(i for i in document[start:end].split('\n') if re.findall(query, i))
+    return final_data
 
 ## This gets all tokens in <D> tags which includes people, categories & places.
 def getDocumentExtraTokens(document):
-    start, end, tokenizer = sanitizer(document, "<D>", "</D>", 3)
-    tokens = tokenizer.tokenize(document[start:end])
-    return tokens
+    start, end, query = sanitizer(document, "<D>", "</D>", 3)
+    final_data = ' '.join(i for i in document[start:end].split('\n') if re.findall(query, i))
+    return final_data
 
 def getDocumentId(document):
     start = document.find('NEWID="') + 7
@@ -131,8 +142,6 @@ def block_reader(path):
         for fileName in tqdm(files):
             raw = open(fileName, 'r', errors='ignore').read()
             fileContent.append(raw)
-
-        #assert len(fileContent) == 22, "There may be a missing file!"
         
     except FileNotFoundError:
         print("File not found!")

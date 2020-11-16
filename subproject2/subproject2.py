@@ -1,7 +1,6 @@
-import nltk, time, sys, os, json
-from collections import OrderedDict, defaultdict 
+import nltk, sys, os, json
+from collections import OrderedDict
 from tqdm import tqdm
-from heapq import merge
 sys.path.append('utils')
 import asserts, utils
 
@@ -17,11 +16,8 @@ def ranked_index(path):
     print("\nCalculating document average length")
     L_ave = utils.doc_length_average(doc_pairs)
     
-    with open("postings_list.json", 'r') as f:
-        data = f.read()
-    
     print("\nCalculating RSV per document")
-    inverted_index = json.loads(data)
+    inverted_index = utils.open_dictionary_file("postings_list.json")
     document_rsv = dict()
     doc_number = 1
     sum = 0
