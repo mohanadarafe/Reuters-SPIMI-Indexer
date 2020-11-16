@@ -58,11 +58,19 @@ def getDocumentId(document):
     end = document.find(">", start) - 1
     return document[start:end]
 
+def get_scores_from_or_query(tf_scores):
+    tf_scores.sort(key = lambda x: x[1], reverse=True)
+    
+    top = 10 if (len(tf_scores) > 10) else len(tf_scores)
+    print(f'The top {top} documents are:')
+    for i in range(top):
+        print(f'{i+1}. Document {tf_scores[i][0]} with {tf_scores[i][1]} occurence(s)')
+
 def get_scores_from_postings(postings, rsv_scores):
     scores = []
     for docID in postings:
         scores.append((docID , float(rsv_scores[str(docID)])))
-    scores = sorted(scores, key = lambda x: x[1])
+    scores = sorted(scores, reverse=True, key = lambda x: x[1])
     
     top = 10 if (len(scores) > 10) else len(scores)
     print(f'The top {top} documents are:')
@@ -81,7 +89,7 @@ def _denominator(k, b, L_d, L_ave, tf):
     product = k * (product1_1 + product1_2)
     return product + tf
 
-def compute_rsv(df, tf, Ld, Lave, b=0, k=1) -> float:
+def compute_rsv(df, tf, Ld, Lave, b=0.5, k=20) -> float:
     N = 21578
     product1 = idf(N, df)
     product2 = _numerator(k, tf) / _denominator(k, b, Ld, Lave, tf)
