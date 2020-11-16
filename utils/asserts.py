@@ -10,6 +10,7 @@ def init_params():
     parser.add_argument('-o', '--output_file', default=sys.stdout, help='Output to file, default stdout')  
     parser.add_argument('-p', '--path', help='Reuters collection directory')  
     parser.add_argument('-q', '--query', nargs='*', default=None, help='Query') 
+    parser.add_argument('-t', '--type', nargs='*', default=None, help='Query Type') 
     init_params.args = parser.parse_args()
 
     if type(init_params.args.input_file) is str:

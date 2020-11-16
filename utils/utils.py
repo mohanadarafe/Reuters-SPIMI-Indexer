@@ -58,10 +58,33 @@ def getDocumentId(document):
     end = document.find(">", start) - 1
     return document[start:end]
 
+def get_scores_from_postings(postings, rsv_scores):
+    scores = []
+    for docID in postings:
+        scores.append((docID , float(rsv_scores[str(docID)])))
+    scores = sorted(scores, key = lambda x: x[1])
+    
+    top = 10 if (len(scores) > 10) else len(scores)
+    print(f'The top {top} documents are:')
+    for i in range(top):
+        print(f'{i+1}. Document {scores[i][0]}')
+
+def idf(N, df):
+    return math.log(N/df)
+
+def _numerator(k, tf):
+    return tf * (1+k)
+
+def _denominator(k, b, L_d, L_ave, tf):
+    product1_1 = 1-b
+    product1_2 = b * (L_d / L_ave)
+    product = k * (product1_1 + product1_2)
+    return product + tf
+
 def compute_rsv(df, tf, Ld, Lave, b=0, k=1) -> float:
     N = 21578
-    product1 = math.log(N/df)
-    product2 = (((k + 1) * tf) / (k * ((1-b) + (b * (Ld/Lave)) + tf)))
+    product1 = idf(N, df)
+    product2 = _numerator(k, tf) / _denominator(k, b, Ld, Lave, tf)
     return product1 * product2
 
 def doc_length_average(document_dict):

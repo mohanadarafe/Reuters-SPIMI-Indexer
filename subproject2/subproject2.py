@@ -24,7 +24,10 @@ def ranked_index(path):
     for document in tqdm(doc_pairs):
         tf_id_dict = utils.build_tf_id(document)
         for tokens, tf in tf_id_dict.items():
-            df = inverted_index[tokens][0]
+            if tokens in inverted_index: 
+                df = inverted_index[tokens][0]
+            else: 
+                continue
             L_d = len(tf_id_dict)
             sum += utils.compute_rsv(df, tf, L_d, L_ave)
 
