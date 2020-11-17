@@ -44,7 +44,7 @@ conda activate project3
 Make sure you run **all commmands** from the project directory.
 
 ### Sub-project 1
-Sub-project 1 will separate blocks in sizes of 500 tokens & produces X number of blocks in the output folder. Finally, it will produce the postings list in the root folder.
+Sub-project 1 will separate blocks in sizes of 500 terms & produces X number of blocks in the output folder. Finally, it will produce the postings list in the root folder.
 
 ```
 python subproject1/run.py
@@ -60,24 +60,11 @@ python subproject2/run.py
 Once the ranked retrieval is ready, the program asks the user the following questions:
 
 ```
-Please enter a query type: [1] SINGLE [2] AND [3] OR:
+Please enter a query type: [1] SINGLE [2] AND [3] OR [4] RANKED:
 ```
-You can simply enter 1, 2 or 3.
+You can simply enter 1 for SINGLE, 2 for AND, 3 for OR, 4 for RANKED.
 
 ```
 Please enter a query: 
 ```
 You can enter any query.
-
-If you simply want to get the top documents ranked without having to run the entire computation of BM25, you can run the following command:
-```
-python subproject2/query.py -q "<query_term>" -t "<query_type>"
-<query_term>: query (you can put a sentence)
-<query_type>: query type (1: SINGLE, 2: AND, 3: OR)
-
-ex: AND Query "George Bush"
-python subproject2/query.py -q "George Bush" -t "2"
-
-ex: SINGLE Query "Democrats'"
-python subproject2/query.py -q "Democrats'" -t "1"
-```

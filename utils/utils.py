@@ -2,7 +2,11 @@ import nltk, glob, math, os, json, re
 from nltk import word_tokenize
 from tqdm import tqdm
 
-def open_dictionary_file(file):
+def open_dictionary_file(file: str) -> dict:
+    '''
+    The following function inputs a file name & loads it into a dictionary
+    that is returned.
+    '''
     assert os.path.isfile(file), "The file does not exist!"
     dictionary = dict()
     with open(file, 'r') as json_file: 
@@ -10,7 +14,11 @@ def open_dictionary_file(file):
 
     return dictionary
 
-def get_tokens(document):
+def get_tokens(document: str) -> list:
+    '''
+    The following function fetches every token from the document and
+    returns the list of tokens cleaned.
+    '''
     tokensList = []
     for tokens in getDocumentTitle(document).split(" "):
         if tokens and "&" not in tokens:
@@ -26,7 +34,11 @@ def get_tokens(document):
 
     return tokensList
 
-def sanitizer(document, starterDelimiter, endDelimiter, index):
+def sanitizer(document: str, starterDelimiter: str, endDelimiter: str, index: int):
+    ''' 
+    The following function inputs a document, starter delimeter, ending delimeter and
+    an index. The functons is used as a helper to tokenize tokens removing unwanted tokens.
+    '''
     query = r"(?=\S*[\'-])([a-zA-Z\'-]+)|(\w+)"
     start = document.find(starterDelimiter) + index
     end = document.find(endDelimiter)
@@ -47,7 +59,6 @@ def getDocumentDate(document):
     final_data = ' '.join(i for i in document[start:end].split('\n') if re.findall(query, i))
     return final_data
 
-## This gets all tokens in <D> tags which includes people, categories & places.
 def getDocumentExtraTokens(document):
     start, end, query = sanitizer(document, "<D>", "</D>", 3)
     final_data = ' '.join(i for i in document[start:end].split('\n') if re.findall(query, i))
@@ -59,6 +70,10 @@ def getDocumentId(document):
     return document[start:end]
 
 def get_scores_from_or_query(postings: list, tf_dict: list, query_terms: list):
+    ''' 
+    The following function gets the results from the OR query & displays the
+    top results to the user.
+    '''
     tf = [(0, 0)]*len(postings)
     index = 0
     for docID in postings:
@@ -73,8 +88,36 @@ def get_scores_from_or_query(postings: list, tf_dict: list, query_terms: list):
     print(f'The top {top} documents are:')
     for i in range(top):
         print(f'{i+1}. Document {tf[i][0]} with {tf[i][1]} occurence(s)')
+        
+def get_scores_from_ranked_query(postings: list, tf_dict: list, inverted_index: dict, query_terms: list, L_ave):
+    ''' 
+    The following function gets the results from the RANKED query & displays the
+    top results to the user.
+    '''
+    scores = [(0, 0)]*len(postings)
+    index = 0
+    for docID in postings:
+        for query in query_terms:
+            if query in tf_dict[docID-1]:
+                df = inverted_index[query][0]
+                tf = tf_dict[docID-1][query]
+                L_d = len(tf_dict[docID-1])
+                rsv_score = compute_rsv(df, tf, L_d, L_ave)
+                scores[index] = (docID, scores[index][1] + rsv_score)
+        index += 1
+
+    scores.sort(key = lambda x: x[1], reverse=True)
+    
+    top = 10 if (len(scores) > 10) else len(scores)
+    print(f'The top {top} documents are:')
+    for i in range(top):
+        print(f'{i+1}. Document {scores[i][0]} with a score of {round(scores[i][1], 3)}')
 
 def get_scores_from_and_postings(postings: list, tf_dict: list, inverted_index: dict, query_terms: list, L_ave):
+    ''' 
+    The following function gets the results from the AND qeury & displays the
+    top results to the user.
+    '''
     scores = [(0, 0)]*len(postings)
     index = 0
     for docID in postings:
@@ -87,13 +130,16 @@ def get_scores_from_and_postings(postings: list, tf_dict: list, inverted_index: 
         index += 1
 
     scores = sorted(scores, reverse=True, key = lambda x: x[1])
-    print(scores)
     top = 10 if (len(scores) > 10) else len(scores)
     print(f'The top {top} documents are:')
     for i in range(top):
         print(f'{i+1}. Document {scores[i][0]} with a score of {round(scores[i][1], 3)}')
 
 def get_scores_from_single_postings(postings: list, tf_dict: list, inverted_index: dict, query, L_ave):
+    ''' 
+    The following function gets the results from the SINGLE qeury & displays the
+    top results to the user.
+    '''
     scores = []
 
     for docID in postings:
@@ -109,24 +155,38 @@ def get_scores_from_single_postings(postings: list, tf_dict: list, inverted_inde
     for i in range(top):
         print(f'{i+1}. Document {scores[i][0]} with a score of {round(scores[i][1], 3)}')
 
-def idf(N, df):
+def idf(N: int, df: int) -> float:
+    ''' 
+    The following function computes the inverse document frequency
+    '''
     value = 0
     try:
-        value = math.log(N/df)
+        value = math.log10(N/df)
     except ZeroDivisionError:
         value = 0
     return value
 
-def _numerator(k, tf):
+def _numerator(k: float, tf: float) -> float:
+    '''
+    The following function computes the numerator of the BM25 formula.
+    (k + 1) * tf
+    '''
     return tf * (1+k)
 
-def _denominator(k, b, L_d, L_ave, tf):
+def _denominator(k: float, b: float, L_d: float, L_ave: float, tf: float):
+    '''
+    The following function computes the denominator of the BM25 formula.
+    k * ((1-b) + b * (L_d / L_ave)) + tf
+    '''
     product1_1 = 1-b
     product1_2 = b * (L_d / L_ave)
     product = k * (product1_1 + product1_2)
     return product + tf
 
-def compute_rsv(df, tf, Ld, Lave, b=1, k=20) -> float:
+def compute_rsv(df, tf, Ld, Lave, b=0.5, k=5) -> float:
+    '''
+    The following function computes the BM25 formula.
+    '''
     try: 
         N = 21578
         product1 = idf(N, df)
