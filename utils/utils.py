@@ -58,27 +58,64 @@ def getDocumentId(document):
     end = document.find(">", start) - 1
     return document[start:end]
 
-def get_scores_from_or_query(tf_scores):
-    tf_scores.sort(key = lambda x: x[1], reverse=True)
+def get_scores_from_or_query(postings: list, tf_dict: list, query_terms: list):
+    tf = [(0, 0)]*len(postings)
+    index = 0
+    for docID in postings:
+        for query in query_terms:
+            if query in tf_dict[docID-1]:
+                tf[index] = (docID, tf[index][1] + tf_dict[docID-1][query])
+        index += 1
+
+    tf.sort(key = lambda x: x[1], reverse=True)
     
-    top = 10 if (len(tf_scores) > 10) else len(tf_scores)
+    top = 10 if (len(tf) > 10) else len(tf)
     print(f'The top {top} documents are:')
     for i in range(top):
-        print(f'{i+1}. Document {tf_scores[i][0]} with {tf_scores[i][1]} occurence(s)')
+        print(f'{i+1}. Document {tf[i][0]} with {tf[i][1]} occurence(s)')
 
-def get_scores_from_postings(postings, rsv_scores):
-    scores = []
+def get_scores_from_and_postings(postings: list, tf_dict: list, inverted_index: dict, query_terms: list, L_ave):
+    scores = [(0, 0)]*len(postings)
+    index = 0
     for docID in postings:
-        scores.append((docID , float(rsv_scores[str(docID)])))
+        for query in query_terms:
+            df = inverted_index[query][0]
+            tf = tf_dict[docID-1][query]
+            L_d = len(tf_dict[docID-1])
+            rsv_score = compute_rsv(df, tf, L_d, L_ave)
+            scores[index] = (docID, scores[index][1] + rsv_score)
+        index += 1
+
+    scores = sorted(scores, reverse=True, key = lambda x: x[1])
+    print(scores)
+    top = 10 if (len(scores) > 10) else len(scores)
+    print(f'The top {top} documents are:')
+    for i in range(top):
+        print(f'{i+1}. Document {scores[i][0]} with a score of {round(scores[i][1], 3)}')
+
+def get_scores_from_single_postings(postings: list, tf_dict: list, inverted_index: dict, query, L_ave):
+    scores = []
+
+    for docID in postings:
+        df = inverted_index[query][0]
+        tf = tf_dict[docID-1][query]
+        L_d = len(tf_dict[docID-1])
+        rsv_score = compute_rsv(df, tf, L_d, L_ave)
+        scores.append((docID , rsv_score))
     scores = sorted(scores, reverse=True, key = lambda x: x[1])
     
     top = 10 if (len(scores) > 10) else len(scores)
     print(f'The top {top} documents are:')
     for i in range(top):
-        print(f'{i+1}. Document {scores[i][0]}')
+        print(f'{i+1}. Document {scores[i][0]} with a score of {round(scores[i][1], 3)}')
 
 def idf(N, df):
-    return math.log(N/df)
+    value = 0
+    try:
+        value = math.log(N/df)
+    except ZeroDivisionError:
+        value = 0
+    return value
 
 def _numerator(k, tf):
     return tf * (1+k)
@@ -89,10 +126,14 @@ def _denominator(k, b, L_d, L_ave, tf):
     product = k * (product1_1 + product1_2)
     return product + tf
 
-def compute_rsv(df, tf, Ld, Lave, b=0.5, k=20) -> float:
-    N = 21578
-    product1 = idf(N, df)
-    product2 = _numerator(k, tf) / _denominator(k, b, Ld, Lave, tf)
+def compute_rsv(df, tf, Ld, Lave, b=1, k=20) -> float:
+    try: 
+        N = 21578
+        product1 = idf(N, df)
+        product2 = _numerator(k, tf) / _denominator(k, b, Ld, Lave, tf)
+    except ZeroDivisionError:
+        return 0
+
     return product1 * product2
 
 def doc_length_average(document_dict):
