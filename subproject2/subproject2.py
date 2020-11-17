@@ -66,7 +66,6 @@ def ranked_term_query(query_terms: str, inverted_index: dict, tf_dict: list):
     terms = query_terms.split()
 
     for query in terms:
-        print(len(inverted_index))
         if query in inverted_index:
             postings_of_query_terms.append(inverted_index[query][1])
         else:
