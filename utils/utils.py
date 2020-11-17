@@ -183,7 +183,7 @@ def _denominator(k: float, b: float, L_d: float, L_ave: float, tf: float):
     product = k * (product1_1 + product1_2)
     return product + tf
 
-def compute_rsv(df, tf, Ld, Lave, b=0.5, k=5) -> float:
+def compute_rsv(df, tf, Ld, Lave, b=0.5, k=10) -> float:
     '''
     The following function computes the BM25 formula.
     '''

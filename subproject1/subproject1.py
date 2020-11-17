@@ -94,17 +94,20 @@ def SPIMI(path: str):
 
     blockNumber = 1
     dictionary = dict()
-    BLOCK_SIZE = 10000
+    BLOCK_SIZE = 500
+    tokenNumber = 1
 
     print("\nSeparating blocks...")
     for block in tqdm(utils.block_tokenizer(doc_pairs)):
         build_postings_list(block, dictionary)
 
-        if len(dictionary) == BLOCK_SIZE:
+        if tokenNumber == BLOCK_SIZE:
             dictionary = sort_postings_list(dictionary)
             write_block_to_disk(dictionary, blockNumber)
             dictionary = dict() # reset the dictionary for the next block
             blockNumber += 1 
+            tokenNumber = 0
+        else: tokenNumber += 1
 
     # Dump the rest
     dictionary = sort_postings_list(dictionary)

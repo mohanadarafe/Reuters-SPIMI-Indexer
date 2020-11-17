@@ -1,10 +1,10 @@
-import os, nltk
+import os, nltk, shutil
 from subprocess import *
 
-if not os.path.isdir("output"):
-    os.makedirs("output")
-else:
-    os.replace("output", "output")
+if os.path.isdir("output"):
+    shutil.rmtree("output")
+
+os.makedirs("output")
 
 try:
     nltk.data.find('tokenizer/punkt')
