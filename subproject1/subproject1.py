@@ -50,9 +50,11 @@ def merge_blocks():
     file is labelled as Block.json. It produces the postings list in the 
     root folder.
 
-    Initially, it merges the blocks simply by considering the postings list
-    without the document frequency. Once that is merged, we simply add the
-    frequency and produce the tuple for our dictionary.
+    The merge is done by looking at every line of every block sequentially.
+    For example, when the first block is read, we look at every token individually
+    and add the tokens one by one in a final inverted index dictionary. Once our
+    dictionary is complete, we simply change our dictionary to return a tuple consisting
+    of the postings list (that we originally added) & the document frequency.
     '''
     inverted_index = OrderedDict()
     
